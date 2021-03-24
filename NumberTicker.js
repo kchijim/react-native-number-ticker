@@ -2,18 +2,20 @@ import React, {Component} from "react";
 import {Animated, Easing, StyleSheet, Text, View} from "react-native";
 import PropTypes from "prop-types";
 
+const resetHeight = (size) => size+4;
+
 const NumberTicker = ({style, textSize = 35, textStyle, number, duration}) => {
 
     const mapToDigits = () => {
-        return (number + '').split('').map((data) => {
+        return (number + '').split('').map((data, idx) => {
             if (data === '.' || data === ',') {
                 return (
-                    <Text key={data} style={[textStyle, {fontSize: textSize}]}>{data}</Text>
+                    <Text allowFontScaling={false} key={`number-${idx}`} style={[textStyle, {fontSize: textSize, lineHeight: resetHeight(textSize)}]}>{data}</Text>
                 );
             }
             return (
                 <TextTicker
-                    key={data}
+                    key={`number-${idx}`}
                     textSize={textSize}
                     textStyle={textStyle}
                     targetNumber={parseFloat(data, 10)}
@@ -25,7 +27,7 @@ const NumberTicker = ({style, textSize = 35, textStyle, number, duration}) => {
 
     return (
         <View style={style}>
-            <View style={{flexDirection: 'row'}}>
+            <View style={{flexDirection: 'row',alignItems:'flex-end'}}>
                 {mapToDigits()}
             </View>
         </View>
@@ -42,29 +44,36 @@ class TextTicker extends Component {
             delay: 800,
             number: 1
         };
-        const {targetNumber} = this.props;
+        // const {targetNumber} = this.props;
 
-        if (this.props.targetNumber > 5) {
-            for (let i = 0; i <= targetNumber; i++) {
-                this.numberList.push({id: i});
-            }
-        } else {
-            for (let i = 9; i >= targetNumber; i--) {
-                this.numberList.push({id: i});
-            }
-        }
+        // if (this.props.targetNumber > 5) {
+        //     for (let i = 0; i <= targetNumber; i++) {
+        //         this.numberList.push({id: i});
+        //     }
+        // } else {
+        //     for (let i = 9; i >= targetNumber; i--) {
+        //         this.numberList.push({id: i});
+        //     }
+        // }
     }
 
     componentDidMount() {
         this.startAnimation();
     }
 
-    numberList = [];
+    componentDidUpdate(prevProps) {
+      if (prevProps.targetNumber !== this.props.targetNumber) {
+        this.startAnimation();
+      }
+    }
+
+    numberList = [0,1,2,3,4,5,6,7,8,9];
 
     startAnimation = () => {
         const {animatedValue} = this.state;
+        const {targetNumber,textSize} = this.props;
         Animated.timing(animatedValue, {
-            toValue: 1,
+            toValue: -(resetHeight(textSize)*targetNumber),
             duration: this.props.duration,
             easing: Easing.out(Easing.cubic),
             useNativeDriver: true,
@@ -83,9 +92,9 @@ class TextTicker extends Component {
 
 
     renderNumbers = (styles) => {
-        return this.numberList.map((data) => {
+        return this.numberList.map((data, idx) => {
             return (
-                <Text key={data.id} style={[this.props.textStyle, styles.text]}>{data.id}</Text>
+                <Text allowFontScaling={false} key={`numberList-${idx}`} style={[this.props.textStyle, styles.text]}>{data}</Text>
             )
         });
     };
@@ -98,7 +107,7 @@ class TextTicker extends Component {
             <View style={styles.container}>
                 <Animated.View style={{
                     transform: [{
-                        translateY: this.getInterpolatedVal(animatedValue)
+                        translateY: animatedValue,
                     }]
                 }}>
                     {this.renderNumbers(styles)}
@@ -126,14 +135,14 @@ TextTicker.propTypes = {
 const generateStyles = (textSize) => StyleSheet.create({
     container: {
         width: textSize * 0.62,
-        height: textSize,
+        height: resetHeight(textSize),
         overflow: 'hidden',
         alignItems: 'center',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-start',
     },
     text: {
         fontSize: textSize,
-        lineHeight: textSize,
+        lineHeight: resetHeight(textSize),
     },
 });
 
